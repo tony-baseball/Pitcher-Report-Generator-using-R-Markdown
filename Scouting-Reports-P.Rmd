@@ -1,0 +1,261 @@
+---
+output:
+  pdf_document: 
+    keep_tex: false
+geometry: margin=0.05in
+ 
+header-includes:
+ 
+  \usepackage{booktabs}
+  \usepackage{colortbl}
+  \usepackage{subfig}
+  \usepackage{floatrow}
+  \usepackage{sectsty}
+  \usepackage{titlesec}
+ 
+
+---
+```{r setup, include=FALSE}
+#
+library(webshot)
+library(tidyverse)
+library(kableExtra)
+library(gridExtra)
+library(gtsummary)
+library(pak)
+library(kableExtra)
+library(knitr)
+library(flextable)
+library(pandoc)
+library(ggplot2)
+opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(fig.pos = '!h')
+```
+
+\begin{center}
+\textbf{\LARGE `r params$pitcher` - `r params$date` vs `r params$opponent`}
+\end{center}
+
+\vspace{-7mm} 
+
+\begin{center}
+\textbf{\normalsize Game Line}
+\end{center}
+\vspace{-5mm} 
+```{r game_summary_table and stats, echo=FALSE, warning=FALSE }
+
+kable(game_stats, format = "latex",  linesep = "") %>%
+  kable_styling(latex_options = "HOLD_position", position = "center")%>%
+      column_spec(1, bold = TRUE, border_left = TRUE) %>%
+      row_spec(row = 0, color = "black", background = "#FF5733") %>%
+      column_spec(ncol(game_stats), border_right = TRUE)
+```
+\vspace{-9mm} 
+\begin{center}
+\textbf{\normalsize Pitch Chracteristics}
+\end{center}
+\vspace{-5mm} 
+```{r pitch characteristics ,warning=FALSE,echo=FALSE}
+
+# we again scale the colors manually to match the plots
+game_summary_table %>%
+  kable(format = "latex",  linesep = "", label = "Game Summary") %>%
+  kable_styling(latex_options = "HOLD_position", position = "center") %>%
+  column_spec(1, bold = TRUE, border_left = TRUE, color = "white", 
+              background = ifelse(game_summary_table$Pitch == 'FB', 'red', 
+                                  ifelse(game_summary_table$Pitch == 'SI', 'orange', 
+                                         ifelse(game_summary_table$Pitch == 'CT', '#FFD700', 
+                                                ifelse(game_summary_table$Pitch == 'CB', '#228b22', 
+                                                       ifelse(game_summary_table$Pitch == 'SL', '#33A8FF', 
+                                                              ifelse(game_summary_table$Pitch == 'CH', '#E398F7', 
+
+
+                                         'black'))))))
+              ) %>% 
+  row_spec(row = 0, color = "black", background = "#FF5733") %>%
+  column_spec(ncol(game_summary_table), border_right = TRUE) 
+# data objects d1 and d2 are from the previous code chunk
+```
+\vspace{-8mm} 
+
+\begin{center}
+\begin{minipage}[t]{0.4\textwidth}
+\centering
+\textbf{\normalsize Pitch Usage}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.5\textwidth}
+\centering
+\textbf{\normalsize Batted Ball Profile}
+\end{minipage}
+\end{center}
+\vspace{-6mm} 
+
+```{r pitch usage and batted ball, echo=FALSE, warning=FALSE}
+knitr::kables(
+  list(
+    # the first kable() to change column names
+    knitr::kable(
+      pitch_usage_table, valign = 't', label = 'Pitch Usage'
+      ) %>%
+      column_spec(1, bold = TRUE, border_left =  TRUE, color = "white",
+              background = ifelse(game_summary_table$Pitch == 'FB', 'red',
+                                  ifelse(game_summary_table$Pitch == 'SI', 'orange',
+                                         ifelse(game_summary_table$Pitch == 'CT', '#FFD700',
+                                                ifelse(game_summary_table$Pitch == 'CB', '#228b22',
+                                                       ifelse(game_summary_table$Pitch == 'SL', '#33A8FF',
+                                                              ifelse(game_summary_table$Pitch == 'CH', '#E398F7',
+
+
+                                         'black'))))))
+              )%>%
+      row_spec(row = 0, color = "black", background = "#FF5733")%>%
+      column_spec(ncol(pitch_usage_table), border_right = TRUE),
+    
+    # the second kable() to set the digits option
+    knitr::kable(batted_ball,  valign = 't', label = 'Batted Ball') %>%
+      column_spec(1, bold = TRUE, border_left =  TRUE, color = "white",
+              background = ifelse(game_summary_table$Pitch == 'FB', 'red',
+                                  ifelse(game_summary_table$Pitch == 'SI', 'orange',
+                                         ifelse(game_summary_table$Pitch == 'CT', '#FFD700',
+                                                ifelse(game_summary_table$Pitch == 'CB', '#228b22',
+                                                       ifelse(game_summary_table$Pitch == 'SL', '#33A8FF',
+                                                              ifelse(game_summary_table$Pitch == 'CH', '#E398F7',
+
+
+                                         'black'))))))
+              )%>%
+      row_spec(row = 0, color = "black", background = "#FF5733") %>%
+      column_spec(ncol(batted_ball), border_right = TRUE)
+  ), format = "latex" )    %>%
+  kable_styling(latex_options = "HOLD_position")
+
+
+
+# knitr::kable(game_stats,  valign = 't', label = 'Game Stats') %>%
+#       column_spec(1, bold = TRUE, border_left = TRUE) %>%
+#       row_spec(row = 0, color = "black", background = "#FF5733") %>%
+#       column_spec(ncol(game_stats), border_right = TRUE)
+#   ), format = "latex" )
+```
+\vspace{-5mm} 
+```{r vb/hb plot and velo plot, echo=FALSE, warning=FALSE, fig.width=3,fig.height=3} 
+pitch_movement_plot
+pvp_game_plot
+```
+ \vspace{-5mm} 
+
+\vspace{-2mm} 
+
+```{r Pitch Location vs RHH and LHH, echo=FALSE, warning=FALSE, fig.width=4.15,fig.height=2.25, position= 'center'} 
+if(nrow(usage_r)>0){
+plp_rhh} else {"No data vs RHH available"}
+if(nrow(usage_l)>0){
+plp_lhh} else {"No data vs LHH available"}
+```
+\vspace{-5mm} 
+
+\begin{center}
+\begin{minipage}[t]{0.4\textwidth}
+\centering
+\textbf{\normalsize Pitch Usage vs Right}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.5\textwidth}
+\centering
+\textbf{\normalsize Pitch Usage vs Left}
+\end{minipage}
+\end{center}
+\vspace{-6mm} 
+
+```{r usage vs R & L,echo=FALSE,warning=FALSE }
+
+
+knitr::kables(
+  list(
+    # the first kable() to change column names
+    if(nrow(usage_r) >0){
+    knitr::kable(
+      usage_r, valign = 't', label = 'Pitch Usage'
+      ) %>%
+      column_spec(1, bold = TRUE, border_left =  TRUE, color = "white",
+              background = ifelse(game_summary_table$Pitch == 'FB', 'red',
+                                  ifelse(game_summary_table$Pitch == 'SI', 'orange',
+                                         ifelse(game_summary_table$Pitch == 'CT', '#FFD700',
+                                                ifelse(game_summary_table$Pitch == 'CB', '#228b22',
+                                                       ifelse(game_summary_table$Pitch == 'CH', '#E398F7',
+                                                              ifelse(game_summary_table$Pitch == 'SL', '#33A8FF',
+                                                                     'black'))))))
+              )%>%
+      row_spec(row = 0, color = "black", background = "#FF5733")%>%
+      column_spec(ncol(usage_r), border_right = TRUE)},
+    
+    if(nrow(usage_l) >0){
+    # the second kable() to set the digits option
+    knitr::kable(usage_l,  valign = 't', label = 'Batted Ball') %>%
+      column_spec(1, bold = TRUE, border_left =  TRUE, color = "white",
+              background = ifelse(game_summary_table$Pitch == 'FB', 'red',
+                                  ifelse(game_summary_table$Pitch == 'SI', 'orange',
+                                         ifelse(game_summary_table$Pitch == 'CT', '#FFD700',
+                                                ifelse(game_summary_table$Pitch == 'CB', '#228b22',
+                                                       ifelse(game_summary_table$Pitch == 'CH', '#E398F7',
+                                                              ifelse(game_summary_table$Pitch == 'SL', '#33A8FF',
+                                                                     'black'))))))
+              )%>%
+      row_spec(row = 0, color = "black", background = "#FF5733") %>%
+      column_spec(ncol(usage_l), border_right = TRUE) }
+  ), 
+  format = "latex" )    %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+\vspace{-8mm} 
+
+\begin{center}
+\begin{minipage}[t]{0.4\textwidth}
+\centering
+\textbf{\normalsize Game Line vs Right}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.5\textwidth}
+\centering
+\textbf{\normalsize Game Line vs Left}
+\end{minipage}
+\end{center}
+\vspace{-5mm} 
+
+
+```{r stats vs r and l, echo=FALSE, warning=FALSE}
+knitr::kables(
+  list(
+    # the first kable() to change column names
+    knitr::kable(
+      stats_vs_r, valign = 't', label = 'Pitch Usage'
+      ) %>%
+      column_spec(1, bold = TRUE, border_left =  TRUE)%>%
+      row_spec(row = 0, color = "black", background = "#FF5733")%>%
+      column_spec(ncol(stats_vs_r), border_right = TRUE),
+    
+    # the second kable() to set the digits option
+    knitr::kable(
+      stats_vs_l, valign = 't', label = 'Pitch Usage'
+      ) %>%
+      column_spec(1, bold = TRUE, border_left =  TRUE)%>%
+      row_spec(row = 0, color = "black", background = "#FF5733")%>%
+      column_spec(ncol(stats_vs_l), border_right = TRUE)
+  ), format = "latex" )    %>%
+  kable_styling(latex_options = "HOLD_position")
+
+
+
+```
+\vspace{-5mm} 
+\newpage
+\begin{center}
+\textbf{\normalsize Situational Pitch Breakdown}
+\end{center}
+\vspace{-5mm} 
+
+```{r situational breakdown, echo = F, warning = F, position='center', fig.height=3, fig.width=8}
+breakdown
+```
+
